@@ -1,0 +1,5 @@
+{
+  "name": "Calculator BMI - Fitness si Sanatate",
+  "description": "Un calculator complet pentru IMC, BMR, necesarul zilnic de calorii și distribuția macronutrienților. Oferă rezultate personalizate și explicații în limba română.",
+  "requestFramePermissions": []
+}
