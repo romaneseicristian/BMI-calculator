@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
-import { UserData, Gender, ActivityLevel } from '../types';
-import { GENDER_OPTIONS, ACTIVITY_LEVEL_OPTIONS } from '../constants';
+import { UserData, Gender, ActivityLevel } from '../types.ts';
+import { GENDER_OPTIONS, ACTIVITY_LEVEL_OPTIONS } from '../constants.ts';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
