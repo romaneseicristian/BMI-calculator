@@ -1,9 +1,8 @@
-
 import React, { useState, useCallback } from 'react';
-import { UserData, CalculationResults, BmiCategory, Gender } from './types';
-import { ACTIVITY_MULTIPLIERS } from './constants';
-import CalculatorForm from './components/CalculatorForm';
-import ResultsDisplay from './components/ResultsDisplay';
+import { UserData, CalculationResults, BmiCategory, Gender } from './types.ts';
+import { ACTIVITY_MULTIPLIERS } from './constants.ts';
+import CalculatorForm from './components/CalculatorForm.tsx';
+import ResultsDisplay from './components/ResultsDisplay.tsx';
 
 function App() {
   const [results, setResults] = useState<CalculationResults | null>(null);
