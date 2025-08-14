@@ -1,5 +1,4 @@
-
-import { ActivityLevel, BmiCategory, Gender } from './types';
+import { ActivityLevel, BmiCategory, Gender } from './types.ts';
 
 export const ACTIVITY_MULTIPLIERS: { [key in ActivityLevel]: number } = {
   [ActivityLevel.SEDENTARY]: 1.2,
