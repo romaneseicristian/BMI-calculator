@@ -119,21 +119,21 @@
             title: "Sfaturi pentru Scăderea în Greutate",
             color: "text-orange-600",
             tips: [
-                "Creați un deficit caloric moderat, dar nu drastic.",
-                "Consumați alimente bogate în proteine pentru a spori sațietatea.",
-                "Limitați zaharurile adăugate și carbohidrații rafinați.",
+                "Mențineți un deficit caloric sustenabil pentru a pierde în jur de 0.5kg pe săptămână.",
+                "Consumați alimente bogate în proteine și fibre pentru a spori sațietatea.",
+                "Limitați zaharurile adăugate, băuturile dulci și carbohidrații rafinați.",
                 "Beți multă apă pe parcursul zilei.",
-                "Combinați dieta cu exerciții cardio și de forță."
+                "Combinați dieta cu exerciții cardio și de forță pentru rezultate optime."
             ]
         },
         [Goal.GAIN]: {
             title: "Sfaturi pentru Creșterea în Greutate",
             color: "text-lime-600",
             tips: [
-                "Creați un surplus caloric, consumând mai multe calorii decât ardeți.",
-                "Alegeți alimente dense caloric și nutritive (nuci, avocado, uleiuri sănătoase).",
-                "Mâncați mese mai frecvente și nu săriți peste ele.",
-                "Includeți suficiente proteine pentru a construi masă musculară.",
+                "Mențineți un surplus caloric pentru a câștiga aproximativ 0.5kg pe săptămână.",
+                "Alegeți alimente dense caloric și nutritive (nuci, avocado, uleiuri sănătoase, lactate integrale).",
+                "Mâncați mese mai frecvente și gustări bogate în nutrienți.",
+                "Includeți suficiente proteine pentru a construi masă musculară, nu doar grăsime.",
                 "Concentrați-vă pe antrenamente de forță pentru a stimula creșterea musculară."
             ]
         },
@@ -141,11 +141,11 @@
             title: "Sfaturi pentru Menținerea Greutății",
             color: "text-sky-600",
             tips: [
-                "Continuați cu o dietă echilibrată și variată.",
-                "Monitorizați-vă greutatea periodic pentru a face ajustări rapide.",
-                "Rămâneți activ fizic în mod regulat.",
-                "Practicați mâncatul conștient (mindful eating).",
-                "Asigurați-vă un somn adecvat și gestionați stresul."
+                "Continuați cu o dietă echilibrată și variată pentru a vă asigura toți nutrienții necesari.",
+                "Monitorizați-vă greutatea periodic pentru a face ajustări rapide dacă este necesar.",
+                "Rămâneți activ fizic în mod regulat pentru a menține metabolismul activ.",
+                "Practicați mâncatul conștient (mindful eating) și ascultați semnalele de foame/sațietate ale corpului.",
+                "Asigurați-vă un somn adecvat și gestionați stresul, deoarece acestea influențează greutatea."
             ]
         }
     };
@@ -184,7 +184,7 @@
           );
         }
 
-        const { bmi, bmiCategory, tdee, macros, goal, goalCalories } = results;
+        const { bmi, bmiCategory, tdee, macros, goal, goalCalories, isCapped } = results;
         const explanation = ROMANIAN_EXPLANATIONS[bmiCategory];
         const tipsData = GOAL_TIPS[goal];
 
@@ -205,15 +205,20 @@
                       <span className="text-5xl font-bold text-primary">{goalCalories.toLocaleString('ro-RO')}</span>
                       <span className="text-xl text-slate-600 ml-2">kcal/zi</span>
                   </p>
-                   {goal !== Goal.MAINTAIN ? (
-                      <p className="text-center text-sm text-slate-500 mt-3">
-                          Acesta este un obiectiv pentru <strong>a {goal === Goal.GAIN ? 'crește' : 'scădea'} în greutate</strong>. Necesarul pentru menținere este de <strong>{tdee.toLocaleString('ro-RO')} kcal/zi</strong>.
-                      </p>
-                  ) : (
-                      <p className="text-center text-sm text-slate-500 mt-3">
+                   {goal === Goal.MAINTAIN ? (
+                       <p className="text-center text-sm text-slate-500 mt-3">
                           Acesta este necesarul caloric estimat pentru a vă <strong>menține</strong> greutatea actuală.
                       </p>
-                  )}
+                   ) : (
+                      <p className="text-center text-sm text-slate-500 mt-3">
+                         Acest obiectiv este calculat pentru a <strong>{goal === Goal.GAIN ? 'câștiga' : 'pierde'} ~0.5kg pe săptămână</strong>. Necesarul pentru menținere este de <strong>{tdee.toLocaleString('ro-RO')} kcal/zi</strong>.
+                      </p>
+                   )}
+                   {isCapped && (
+                       <p className="text-center text-xs text-amber-700 bg-amber-100 p-2 rounded-md mt-3 border border-amber-200">
+                          Notă: Pentru o scădere în greutate sigură și sustenabilă, aportul caloric a fost ajustat la minimul recomandat.
+                       </p>
+                   )}
               </ResultCard>
 
               <ResultCard>
@@ -338,10 +343,36 @@
           </div>
         );
       };
+      
+      const AboutPage = ({ onBack }) => (
+        <div className="w-full max-w-4xl mx-auto bg-white p-8 sm:p-10 rounded-xl shadow-lg border border-slate-200 animate-fade-in">
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-800 mb-6">Despre Calculator</h1>
+            <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed">
+              <p>Acest calculator este un instrument conceput pentru a oferi estimări ale nevoilor dumneavoastră de sănătate și fitness, bazate pe formule științifice standard în domeniu (ecuația Mifflin-St Jeor).</p>
+              <h2 className="text-xl font-semibold text-slate-700 mt-6 mb-2">Disclaimer Important</h2>
+              <p>
+                Rezultatele oferite de acest instrument sunt <strong>pur orientative</strong> și nu trebuie să înlocuiască sfatul unui profesionist medical sau al unui nutriționist acreditat. Metabolismul fiecărei persoane este unic și este influențat de o multitudine de factori, inclusiv genetică, istoric medical, nivel de stres și compoziție corporală exactă (procent de mușchi vs. grăsime), pe care acest calculator nu îi poate lua în considerare.
+              </p>
+              <p>
+                Pentru a primi un plan personalizat și sigur, adaptat nevoilor și condițiilor dumneavoastră specifice de sănătate, vă recomandăm cu tărie să consultați un medic sau un dietetician. Aceștia vă pot oferi o evaluare completă și recomandări care să vă ajute să vă atingeți obiectivele într-un mod sănătos și sustenabil.
+              </p>
+              <p>Nu începeți o dietă restrictivă sau un program intens de exerciții fizice fără a discuta în prealabil cu un specialist.</p>
+            </div>
+            <div className="text-center mt-8">
+                <button
+                    onClick={onBack}
+                    className="inline-flex items-center justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+                >
+                    &larr; Înapoi la Calculator
+                </button>
+            </div>
+        </div>
+      );
 
       // --- Inlined from App.tsx ---
       function App() {
         const [results, setResults] = useState(null);
+        const [view, setView] = useState('calculator'); // 'calculator' or 'about'
 
         const handleCalculate = useCallback((data) => {
           const weight = parseFloat(data.weight);
@@ -358,15 +389,10 @@
           const bmi = weight / (heightInMeters * heightInMeters);
           
           let bmiCategory;
-          if (bmi < 18.5) {
-              bmiCategory = BmiCategory.UNDERWEIGHT;
-          } else if (bmi < 25) {
-              bmiCategory = BmiCategory.NORMAL;
-          } else if (bmi < 30) {
-              bmiCategory = BmiCategory.OVERWEIGHT;
-          } else {
-              bmiCategory = BmiCategory.OBESE;
-          }
+          if (bmi < 18.5) bmiCategory = BmiCategory.UNDERWEIGHT;
+          else if (bmi < 25) bmiCategory = BmiCategory.NORMAL;
+          else if (bmi < 30) bmiCategory = BmiCategory.OVERWEIGHT;
+          else bmiCategory = BmiCategory.OBESE;
 
           let bmr;
           if (data.gender === Gender.MALE) {
@@ -379,12 +405,20 @@
 
           let goal = Goal.MAINTAIN;
           let goalCalories = tdee;
-          const CALORIE_ADJUSTMENT = 500;
+          let isCapped = false;
+          const CALORIE_ADJUSTMENT = 500; // Corresponds to ~0.5kg/week
 
           if (desiredWeight && desiredWeight > 0 && desiredWeight !== weight) {
             if (desiredWeight < weight) {
                 goal = Goal.LOSE;
-                goalCalories = tdee - CALORIE_ADJUSTMENT;
+                let calculatedCalories = tdee - CALORIE_ADJUSTMENT;
+                const minCalories = data.gender === Gender.MALE ? 1500 : 1200;
+                if(calculatedCalories < minCalories) {
+                    goalCalories = minCalories;
+                    isCapped = true;
+                } else {
+                    goalCalories = calculatedCalories;
+                }
             } else { // desiredWeight > weight
                 goal = Goal.GAIN;
                 goalCalories = tdee + CALORIE_ADJUSTMENT;
@@ -411,6 +445,7 @@
               },
               goal,
               goalCalories: Math.round(finalCalories),
+              isCapped,
           });
         }, []);
 
@@ -418,29 +453,38 @@
           setResults(null);
         }, []);
 
+        const MainCalculator = () => (
+          <>
+            <header className="text-center mb-8">
+              <h1 className="text-4xl sm:text-5xl font-bold text-slate-800">
+                Calculator Fitness & Sănătate
+              </h1>
+              <p className="mt-2 text-lg text-slate-600 max-w-2xl mx-auto">
+                Introduceți datele pentru a calcula Indicele de Masă Corporală (IMC), Rata Metabolică Bazală (BMR) și necesarul zilnic de calorii.
+              </p>
+            </header>
+            <main className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+              <div className="lg:col-span-2">
+                <CalculatorForm onCalculate={handleCalculate} onReset={handleReset} hasResults={!!results} />
+              </div>
+              <div className="lg:col-span-3">
+                <ResultsDisplay results={results} />
+              </div>
+            </main>
+          </>
+        );
+
         return (
           <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
             <div className="w-full max-w-6xl mx-auto">
-              <header className="text-center mb-8">
-                <h1 className="text-4xl sm:text-5xl font-bold text-slate-800">
-                  Calculator Fitness & Sănătate
-                </h1>
-                <p className="mt-2 text-lg text-slate-600 max-w-2xl mx-auto">
-                  Introduceți datele pentru a calcula Indicele de Masă Corporală (IMC), Rata Metabolică Bazală (BMR) și necesarul zilnic de calorii.
-                </p>
-              </header>
-
-              <main className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                <div className="lg:col-span-2">
-                  <CalculatorForm onCalculate={handleCalculate} onReset={handleReset} hasResults={!!results} />
-                </div>
-                <div className="lg:col-span-3">
-                  <ResultsDisplay results={results} />
-                </div>
-              </main>
+              
+              {view === 'calculator' ? <MainCalculator /> : <AboutPage onBack={() => setView('calculator')} />}
 
               <footer className="text-center mt-12 text-slate-500 text-sm">
                   <p>&copy; {new Date().getFullYear()} Health & Fitness Calculator. Toate drepturile rezervate.</p>
+                  <button onClick={() => setView('about')} className="mt-2 text-primary hover:text-primary-dark underline focus:outline-none">
+                    Despre Noi & Disclaimer
+                  </button>
               </footer>
             </div>
           </div>
