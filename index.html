@@ -2,7 +2,6 @@
 <html lang="ro">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Health & Fitness Calculator</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -29,11 +28,6 @@
     </script>
     <!-- Add Babel for in-browser JSX & TS transformation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!--
-      This import map has been corrected to resolve the React version conflict.
-      The previous version was incorrectly trying to load both React 18 and 19.
-      This version exclusively loads the stable React 18, which fixes the error.
-    -->
     <script type="importmap">
 {
   "imports": {
@@ -47,6 +41,345 @@
   </head>
   <body class="bg-slate-100 antialiased">
     <div id="root"></div>
-    <script type="text/babel" data-type="module" src="./index.tsx"></script>
+    <script type="text/babel" data-type="module">
+      import React, { useState, useCallback } from 'react';
+      import ReactDOM from 'react-dom/client';
+
+      // --- Inlined from types.ts ---
+      const Gender = {
+        MALE: 'male',
+        FEMALE: 'female',
+      };
+
+      const ActivityLevel = {
+        SEDENTARY: 'sedentary',
+        LIGHTLY_ACTIVE: 'lightly_active',
+        MODERATELY_ACTIVE: 'moderately_active',
+        VERY_ACTIVE: 'very_active',
+      };
+
+      const BmiCategory = {
+          UNDERWEIGHT: 'underweight',
+          NORMAL: 'normal',
+          OVERWEIGHT: 'overweight',
+          OBESE: 'obese',
+      };
+
+      // --- Inlined from constants.ts ---
+      const ACTIVITY_MULTIPLIERS = {
+        [ActivityLevel.SEDENTARY]: 1.2,
+        [ActivityLevel.LIGHTLY_ACTIVE]: 1.375,
+        [ActivityLevel.MODERATELY_ACTIVE]: 1.55,
+        [ActivityLevel.VERY_ACTIVE]: 1.725,
+      };
+
+      const GENDER_OPTIONS = [
+        { value: Gender.MALE, label: 'Masculin' },
+        { value: Gender.FEMALE, label: 'Feminin' },
+      ];
+
+      const ACTIVITY_LEVEL_OPTIONS = [
+        { value: ActivityLevel.SEDENTARY, label: 'Sedentar (puțin sau deloc exercițiu)' },
+        { value: ActivityLevel.LIGHTLY_ACTIVE, label: 'Ușor Activ (exerciții ușoare 1-3 zile/săptămână)' },
+        { value: ActivityLevel.MODERATELY_ACTIVE, label: 'Moderat Activ (exerciții moderate 3-5 zile/săptămână)' },
+        { value: ActivityLevel.VERY_ACTIVE, label: 'Foarte Activ (exerciții intense 6-7 zile/săptămână)' },
+      ];
+
+      const ROMANIAN_EXPLANATIONS = {
+        [BmiCategory.UNDERWEIGHT]: {
+          title: "Subponderal",
+          text: "Un IMC sub 18.5 indică faptul că sunteți subponderal. Acest lucru poate fi un semn că nu mâncați suficient sau poate indica o afecțiune medicală. Este recomandat să discutați cu un medic sau un dietetician pentru a stabili un plan de creștere în greutate sănătos.",
+          color: "text-blue-600"
+        },
+        [BmiCategory.NORMAL]: {
+          title: "Greutate Normală",
+          text: "Felicitări! IMC-ul dumneavoastră se încadrează în intervalul de greutate normală și sănătoasă. Menținerea unei greutăți sănătoase reduce riscul de a dezvolta probleme grave de sănătate. Continuați cu o dietă echilibrată și activitate fizică regulată.",
+          color: "text-green-600"
+        },
+        [BmiCategory.OVERWEIGHT]: {
+          title: "Supraponderal",
+          text: "Un IMC între 25 și 29.9 indică faptul că sunteți supraponderal. Acest lucru poate crește riscul de a dezvolta anumite boli, cum ar fi diabetul de tip 2, bolile de inimă și hipertensiunea arterială. Luați în considerare adoptarea unui stil de viață mai sănătos.",
+          color: "text-yellow-600"
+        },
+        [BmiCategory.OBESE]: {
+          title: "Obezitate",
+          text: "Un IMC de 30 sau mai mare indică obezitate. Obezitatea este asociată cu un risc semnificativ mai mare de probleme grave de sănătate. Este foarte important să consultați un medic pentru a discuta despre opțiunile de management al greutăți.",
+          color: "text-red-600"
+        }
+      };
+
+      // --- Inlined from components/ResultsDisplay.tsx ---
+      const ResultCard = ({ children, className }) => (
+          <div className={`bg-white p-6 rounded-xl shadow-lg border border-slate-200 ${className}`}>
+              {children}
+          </div>
+      );
+
+      const MacroBar = ({ name, grams, percentage, color }) => (
+          <div>
+              <div className="flex justify-between items-baseline mb-1">
+                  <span className="text-sm font-medium text-slate-700">{name}</span>
+                  <span className="text-sm text-slate-500">{grams}g</span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-2.5">
+                  <div className={`${color} h-2.5 rounded-full`} style={{ width: percentage }}></div>
+              </div>
+          </div>
+      );
+
+      const ResultsDisplay = ({ results }) => {
+        if (!results) {
+          return (
+            <div className="flex items-center justify-center bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-slate-200 h-full text-center">
+              <div>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-16 w-16 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                  <h3 className="mt-4 text-xl font-medium text-slate-800">Rezultatele vor apărea aici</h3>
+                  <p className="mt-1 text-sm text-slate-500">Completați formularul pentru a vă vedea rezultatele personalizate.</p>
+              </div>
+            </div>
+          );
+        }
+
+        const { bmi, bmiCategory, tdee, macros } = results;
+        const explanation = ROMANIAN_EXPLANATIONS[bmiCategory];
+
+        return (
+          <div className="space-y-8 animate-fade-in">
+              <ResultCard>
+                  <h3 className="text-lg font-semibold text-slate-800 mb-1">Indicele de Masă Corporală (IMC)</h3>
+                  <p className="flex items-baseline gap-2">
+                      <span className="text-5xl font-bold text-primary">{bmi.toFixed(1)}</span>
+                      <span className={`text-xl font-semibold ${explanation.color}`}>{explanation.title}</span>
+                  </p>
+                  <p className="mt-4 text-sm text-slate-600 leading-relaxed">{explanation.text}</p>
+              </ResultCard>
+              
+              <ResultCard>
+                  <h3 className="text-lg font-semibold text-slate-800 mb-2">Necesar Caloric Zilnic</h3>
+                  <p className="text-slate-600 text-sm mb-4">Acestea sunt caloriile estimate de care aveți nevoie zilnic pentru a vă menține greutatea actuală.</p>
+                  <p className="text-center">
+                      <span className="text-5xl font-bold text-primary">{tdee.toLocaleString('ro-RO')}</span>
+                      <span className="text-xl text-slate-600 ml-2">kcal/zi</span>
+                  </p>
+              </ResultCard>
+
+              <ResultCard>
+                  <h3 className="text-lg font-semibold text-slate-800 mb-2">Distribuția Macronutrienților</h3>
+                  <p className="text-slate-600 text-sm mb-6">O distribuție echilibrată recomandată (40% Carbohidrați, 30% Proteine, 30% Grăsimi) bazată pe necesarul dvs. caloric.</p>
+                  <div className="space-y-4">
+                      <MacroBar name="Carbohidrați" grams={macros.carbs} percentage="40%" color="bg-sky-500" />
+                      <MacroBar name="Proteine" grams={macros.protein} percentage="30%" color="bg-rose-500" />
+                      <MacroBar name="Grăsimi" grams={macros.fats} percentage="30%" color="bg-amber-500" />
+                  </div>
+              </ResultCard>
+          </div>
+        );
+      };
+      
+      // --- Inlined from components/CalculatorForm.tsx ---
+      const FormInput = ({ label, id, unit, optional, ...props }) => (
+        <div>
+          <label htmlFor={id} className="flex justify-between items-baseline text-sm font-medium text-slate-700">
+            <span>{label}</span>
+            {optional && <span className="text-xs text-slate-500">Opțional</span>}
+          </label>
+          <div className="mt-1 relative rounded-md shadow-sm">
+            <input
+              id={id}
+              {...props}
+              className="block w-full px-3 py-2 bg-white border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+            />
+            {unit && (
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <span className="text-slate-500 sm:text-sm">{unit}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+
+      const FormSelect = ({ label, id, options, ...props }) => (
+          <div>
+              <label htmlFor={id} className="block text-sm font-medium text-slate-700">{label}</label>
+              <select
+                  id={id}
+                  {...props}
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
+              >
+                  {options.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+              </select>
+          </div>
+      );
+      
+      const CalculatorForm = ({ onCalculate, onReset, hasResults }) => {
+        const [formData, setFormData] = useState({
+          weight: '',
+          height: '',
+          age: '',
+          gender: Gender.MALE,
+          activityLevel: ActivityLevel.SEDENTARY,
+          desiredWeight: '',
+        });
+
+        const handleChange = (e) => {
+          const { name, value } = e.target;
+          setFormData(prev => ({ ...prev, [name]: value }));
+        };
+
+        const handleSubmit = (e) => {
+          e.preventDefault();
+          onCalculate(formData);
+        };
+        
+        const handleResetClick = () => {
+            setFormData({
+              weight: '',
+              height: '',
+              age: '',
+              gender: Gender.MALE,
+              activityLevel: ActivityLevel.SEDENTARY,
+              desiredWeight: '',
+            });
+            onReset();
+        }
+
+        return (
+          <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-slate-200 h-full">
+            <h2 className="text-2xl font-bold text-slate-800 mb-6">Introduceți Datele Dvs.</h2>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <FormInput label="Greutate" id="weight" name="weight" type="number" value={formData.weight} onChange={handleChange} required unit="kg" placeholder="70" />
+                  <FormInput label="Înălțime" id="height" name="height" type="number" value={formData.height} onChange={handleChange} required unit="cm" placeholder="175" />
+              </div>
+              
+              <FormInput label="Vârstă" id="age" name="age" type="number" value={formData.age} onChange={handleChange} required placeholder="30" />
+              
+              <FormSelect label="Gen" id="gender" name="gender" value={formData.gender} onChange={handleChange} options={GENDER_OPTIONS} />
+
+              <FormSelect label="Nivel de Activitate" id="activityLevel" name="activityLevel" value={formData.activityLevel} onChange={handleChange} options={ACTIVITY_LEVEL_OPTIONS} />
+
+              <FormInput label="Greutate Dorită" id="desiredWeight" name="desiredWeight" type="number" value={formData.desiredWeight} onChange={handleChange} unit="kg" placeholder="68" optional />
+
+              <div className="pt-2 flex flex-col sm:flex-row gap-4">
+                <button type="submit" className="w-full inline-flex justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors">
+                  {hasResults ? 'Recalculează' : 'Calculează'}
+                </button>
+                {hasResults && (
+                  <button type="button" onClick={handleResetClick} className="w-full inline-flex justify-center py-3 px-4 border border-slate-300 shadow-sm text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors">
+                      Resetează
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        );
+      };
+
+      // --- Inlined from App.tsx ---
+      function App() {
+        const [results, setResults] = useState(null);
+
+        const handleCalculate = useCallback((data) => {
+          const weight = parseFloat(data.weight);
+          const height = parseFloat(data.height);
+          const age = parseFloat(data.age);
+
+          if (isNaN(weight) || isNaN(height) || isNaN(age) || weight <= 0 || height <= 0 || age <= 0) {
+            alert("Vă rugăm să introduceți valori valide pentru greutate, înălțime și vârstă.");
+            return;
+          }
+          
+          const heightInMeters = height / 100;
+          const bmi = weight / (heightInMeters * heightInMeters);
+          
+          let bmiCategory;
+          if (bmi < 18.5) {
+              bmiCategory = BmiCategory.UNDERWEIGHT;
+          } else if (bmi < 25) {
+              bmiCategory = BmiCategory.NORMAL;
+          } else if (bmi < 30) {
+              bmiCategory = BmiCategory.OVERWEIGHT;
+          } else {
+              bmiCategory = BmiCategory.OBESE;
+          }
+
+          let bmr;
+          if (data.gender === Gender.MALE) {
+              bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+          } else {
+              bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+          }
+
+          const tdee = bmr * ACTIVITY_MULTIPLIERS[data.activityLevel];
+
+          const macros = {
+              protein: (tdee * 0.30) / 4,
+              carbs: (tdee * 0.40) / 4,
+              fats: (tdee * 0.30) / 9,
+          };
+
+          setResults({
+              bmi,
+              bmiCategory,
+              bmr: Math.round(bmr),
+              tdee: Math.round(tdee),
+              macros: {
+                  protein: Math.round(macros.protein),
+                  carbs: Math.round(macros.carbs),
+                  fats: Math.round(macros.fats),
+              },
+          });
+        }, []);
+
+        const handleReset = useCallback(() => {
+          setResults(null);
+        }, []);
+
+        return (
+          <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
+            <div className="w-full max-w-6xl mx-auto">
+              <header className="text-center mb-8">
+                <h1 className="text-4xl sm:text-5xl font-bold text-slate-800">
+                  Calculator Fitness & Sănătate
+                </h1>
+                <p className="mt-2 text-lg text-slate-600 max-w-2xl mx-auto">
+                  Introduceți datele pentru a calcula Indicele de Masă Corporală (IMC), Rata Metabolică Bazală (BMR) și necesarul zilnic de calorii.
+                </p>
+              </header>
+
+              <main className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                <div className="lg:col-span-2">
+                  <CalculatorForm onCalculate={handleCalculate} onReset={handleReset} hasResults={!!results} />
+                </div>
+                <div className="lg:col-span-3">
+                  <ResultsDisplay results={results} />
+                </div>
+              </main>
+
+              <footer className="text-center mt-12 text-slate-500 text-sm">
+                  <p>&copy; {new Date().getFullYear()} Health & Fitness Calculator. Toate drepturile rezervate.</p>
+              </footer>
+            </div>
+          </div>
+        );
+      }
+      
+      // --- Inlined from index.tsx ---
+      const rootElement = document.getElementById('root');
+      if (!rootElement) {
+        throw new Error("Could not find root element to mount to");
+      }
+
+      const root = ReactDOM.createRoot(rootElement);
+      root.render(
+        <React.StrictMode>
+          <App />
+        </React.StrictMode>
+      );
+    </script>
   </body>
 </html>
