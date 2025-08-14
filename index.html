@@ -64,6 +64,12 @@
           OVERWEIGHT: 'overweight',
           OBESE: 'obese',
       };
+      
+      const Goal = {
+        LOSE: 'lose',
+        MAINTAIN: 'maintain',
+        GAIN: 'gain',
+      };
 
       // --- Inlined from constants.ts ---
       const ACTIVITY_MULTIPLIERS = {
@@ -108,6 +114,42 @@
         }
       };
 
+      const GOAL_TIPS = {
+        [Goal.LOSE]: {
+            title: "Sfaturi pentru Scăderea în Greutate",
+            color: "text-orange-600",
+            tips: [
+                "Creați un deficit caloric moderat, dar nu drastic.",
+                "Consumați alimente bogate în proteine pentru a spori sațietatea.",
+                "Limitați zaharurile adăugate și carbohidrații rafinați.",
+                "Beți multă apă pe parcursul zilei.",
+                "Combinați dieta cu exerciții cardio și de forță."
+            ]
+        },
+        [Goal.GAIN]: {
+            title: "Sfaturi pentru Creșterea în Greutate",
+            color: "text-lime-600",
+            tips: [
+                "Creați un surplus caloric, consumând mai multe calorii decât ardeți.",
+                "Alegeți alimente dense caloric și nutritive (nuci, avocado, uleiuri sănătoase).",
+                "Mâncați mese mai frecvente și nu săriți peste ele.",
+                "Includeți suficiente proteine pentru a construi masă musculară.",
+                "Concentrați-vă pe antrenamente de forță pentru a stimula creșterea musculară."
+            ]
+        },
+        [Goal.MAINTAIN]: {
+            title: "Sfaturi pentru Menținerea Greutății",
+            color: "text-sky-600",
+            tips: [
+                "Continuați cu o dietă echilibrată și variată.",
+                "Monitorizați-vă greutatea periodic pentru a face ajustări rapide.",
+                "Rămâneți activ fizic în mod regulat.",
+                "Practicați mâncatul conștient (mindful eating).",
+                "Asigurați-vă un somn adecvat și gestionați stresul."
+            ]
+        }
+    };
+
       // --- Inlined from components/ResultsDisplay.tsx ---
       const ResultCard = ({ children, className }) => (
           <div className={`bg-white p-6 rounded-xl shadow-lg border border-slate-200 ${className}`}>
@@ -142,8 +184,9 @@
           );
         }
 
-        const { bmi, bmiCategory, tdee, macros } = results;
+        const { bmi, bmiCategory, tdee, macros, goal, goalCalories } = results;
         const explanation = ROMANIAN_EXPLANATIONS[bmiCategory];
+        const tipsData = GOAL_TIPS[goal];
 
         return (
           <div className="space-y-8 animate-fade-in">
@@ -157,23 +200,40 @@
               </ResultCard>
               
               <ResultCard>
-                  <h3 className="text-lg font-semibold text-slate-800 mb-2">Necesar Caloric Zilnic</h3>
-                  <p className="text-slate-600 text-sm mb-4">Acestea sunt caloriile estimate de care aveți nevoie zilnic pentru a vă menține greutatea actuală.</p>
+                  <h3 className="text-lg font-semibold text-slate-800 mb-2">Planul Tău Caloric Zilnic</h3>
                   <p className="text-center">
-                      <span className="text-5xl font-bold text-primary">{tdee.toLocaleString('ro-RO')}</span>
+                      <span className="text-5xl font-bold text-primary">{goalCalories.toLocaleString('ro-RO')}</span>
                       <span className="text-xl text-slate-600 ml-2">kcal/zi</span>
                   </p>
+                   {goal !== Goal.MAINTAIN ? (
+                      <p className="text-center text-sm text-slate-500 mt-3">
+                          Acesta este un obiectiv pentru <strong>a {goal === Goal.GAIN ? 'crește' : 'scădea'} în greutate</strong>. Necesarul pentru menținere este de <strong>{tdee.toLocaleString('ro-RO')} kcal/zi</strong>.
+                      </p>
+                  ) : (
+                      <p className="text-center text-sm text-slate-500 mt-3">
+                          Acesta este necesarul caloric estimat pentru a vă <strong>menține</strong> greutatea actuală.
+                      </p>
+                  )}
               </ResultCard>
 
               <ResultCard>
                   <h3 className="text-lg font-semibold text-slate-800 mb-2">Distribuția Macronutrienților</h3>
-                  <p className="text-slate-600 text-sm mb-6">O distribuție echilibrată recomandată (40% Carbohidrați, 30% Proteine, 30% Grăsimi) bazată pe necesarul dvs. caloric.</p>
+                  <p className="text-slate-600 text-sm mb-6">O distribuție echilibrată (40% Carbohidrați, 30% Proteine, 30% Grăsimi) bazată pe obiectivul tău caloric.</p>
                   <div className="space-y-4">
                       <MacroBar name="Carbohidrați" grams={macros.carbs} percentage="40%" color="bg-sky-500" />
                       <MacroBar name="Proteine" grams={macros.protein} percentage="30%" color="bg-rose-500" />
                       <MacroBar name="Grăsimi" grams={macros.fats} percentage="30%" color="bg-amber-500" />
                   </div>
               </ResultCard>
+
+              {tipsData && (
+                <ResultCard>
+                    <h3 className={`text-lg font-semibold ${tipsData.color} mb-4`}>{tipsData.title}</h3>
+                    <ul className="space-y-3 text-sm text-slate-600 list-disc list-inside">
+                        {tipsData.tips.map((tip, index) => <li key={index}>{tip}</li>)}
+                    </ul>
+                </ResultCard>
+              )}
           </div>
         );
       };
@@ -287,6 +347,7 @@
           const weight = parseFloat(data.weight);
           const height = parseFloat(data.height);
           const age = parseFloat(data.age);
+          const desiredWeight = data.desiredWeight ? parseFloat(data.desiredWeight) : null;
 
           if (isNaN(weight) || isNaN(height) || isNaN(age) || weight <= 0 || height <= 0 || age <= 0) {
             alert("Vă rugăm să introduceți valori valide pentru greutate, înălțime și vârstă.");
@@ -316,10 +377,26 @@
 
           const tdee = bmr * ACTIVITY_MULTIPLIERS[data.activityLevel];
 
+          let goal = Goal.MAINTAIN;
+          let goalCalories = tdee;
+          const CALORIE_ADJUSTMENT = 500;
+
+          if (desiredWeight && desiredWeight > 0 && desiredWeight !== weight) {
+            if (desiredWeight < weight) {
+                goal = Goal.LOSE;
+                goalCalories = tdee - CALORIE_ADJUSTMENT;
+            } else { // desiredWeight > weight
+                goal = Goal.GAIN;
+                goalCalories = tdee + CALORIE_ADJUSTMENT;
+            }
+          }
+        
+          const finalCalories = goalCalories > 0 ? goalCalories : 0;
+
           const macros = {
-              protein: (tdee * 0.30) / 4,
-              carbs: (tdee * 0.40) / 4,
-              fats: (tdee * 0.30) / 9,
+              protein: (finalCalories * 0.30) / 4,
+              carbs: (finalCalories * 0.40) / 4,
+              fats: (finalCalories * 0.30) / 9,
           };
 
           setResults({
@@ -332,6 +409,8 @@
                   carbs: Math.round(macros.carbs),
                   fats: Math.round(macros.fats),
               },
+              goal,
+              goalCalories: Math.round(finalCalories),
           });
         }, []);
 
