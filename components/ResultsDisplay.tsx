@@ -1,7 +1,6 @@
-
 import React from 'react';
-import { CalculationResults } from '../types';
-import { ROMANIAN_EXPLANATIONS } from '../constants';
+import { CalculationResults } from '../types.ts';
+import { ROMANIAN_EXPLANATIONS } from '../constants.ts';
 
 interface ResultsDisplayProps {
   results: CalculationResults | null;
