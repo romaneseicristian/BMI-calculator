@@ -30,8 +30,9 @@
     <!-- Add Babel for in-browser JSX & TS transformation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!--
-      The import map is now cleaned up to prevent version conflicts
-      by exclusively using the stable React 18.
+      This import map has been corrected to resolve the React version conflict.
+      The previous version was incorrectly trying to load both React 18 and 19.
+      This version exclusively loads the stable React 18, which fixes the error.
     -->
     <script type="importmap">
 {
